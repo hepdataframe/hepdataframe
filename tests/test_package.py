@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import hepdataframe as m
+import hepdataframe as hepdf
 
 
-def test_version():
-    assert m.__version__
+def test_version() -> None:
+    """Test version."""
+    assert hepdf.__version__

@@ -7,7 +7,7 @@ import nox
 
 DIR = Path(__file__).parent.resolve()
 
-nox.options.sessions = ["lint", "pylint", "tests"]
+nox.options.sessions = ["black", "lint", "pylint", "mypy", "tests"]
 
 
 @nox.session
@@ -69,3 +69,29 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build")
+
+
+locations = "src", "tests", "noxfile.py"
+
+
+@nox.session
+def black(session: nox.Session) -> None:
+    """
+    Run Black.
+    """
+    args = session.posargs or locations
+    session.install("black")
+    session.run("black", *args)
+
+
+mypy_locations = "src", "tests"
+
+
+@nox.session()
+def mypy(session: nox.Session) -> None:
+    """
+    Run MyPy.
+    """
+    args = session.posargs or mypy_locations
+    session.install("mypy")
+    session.run("mypy", *args)

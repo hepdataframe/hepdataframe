@@ -1,16 +1,19 @@
-# hepdataframe
+# HEP Dataframe
 
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
-[![Code style: black][black-badge]][black-link]
+
+<!-- [![Code style: black][black-badge]][black-link] -->
 
 [![PyPI version][pypi-version]][pypi-link]
-[![Conda-Forge][conda-badge]][conda-link]
+
+<!-- [![Conda-Forge][conda-badge]][conda-link] -->
+
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
-[![Gitter][gitter-badge]][gitter-link]
 
+<!-- [![Gitter][gitter-badge]][gitter-link] -->
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/hepdataframe/hepdataframe/workflows/CI/badge.svg
@@ -30,3 +33,9 @@
 [rtd-link]:                 https://hepdataframe.readthedocs.io/en/latest/?badge=latest
 [sk-badge]:                 https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
 <!-- prettier-ignore-end -->
+
+A Dataframe class for HEP data analysis.
+
+_Author's note: This is NOT a work of fiction. Any similarity to
+[ROOT::RDataframe](https://root.cern/manual/data_frame/) or
+[Pandas](https://pandas.pydata.org/) is purely intentional._
