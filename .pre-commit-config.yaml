@@ -85,6 +85,8 @@ repos:
       - id: mypy
         files: src
         args: []
+        additional_dependencies:
+          ["numpy==1.22.*", "awkward==1.8.*", "uproot==4.2.*"]
 
   # - repo: https://github.com/codespell-project/codespell
   #   rev: v2.1.0
