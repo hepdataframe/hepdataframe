@@ -1,7 +1,10 @@
 """HEP Dataframe"""
 
 
-def main(fooo: str) -> None:
+from __future__ import annotations
+
+
+def main(fooo) -> None:
     """HEP Dataframe - Main"""
     print(f"HEP Dataframe - {fooo}")
 

@@ -7,7 +7,7 @@ import nox
 
 DIR = Path(__file__).parent.resolve()
 
-nox.options.sessions = ["black", "lint", "pylint", "mypy", "tests"]
+nox.options.sessions = ["black", "isort", "lint", "pylint", "mypy", "tests"]
 
 
 @nox.session
@@ -82,6 +82,16 @@ def black(session: nox.Session) -> None:
     args = session.posargs or locations
     session.install("black")
     session.run("black", *args)
+
+
+@nox.session
+def isort(session: nox.Session) -> None:
+    """
+    Run iSort.
+    """
+    args = session.posargs or locations
+    session.install("isort")
+    session.run("isort", *args)
 
 
 mypy_locations = "src", "tests"
