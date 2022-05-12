@@ -1,17 +1,27 @@
 """HEP Dataframe"""
 from __future__ import annotations
 
-from typing import Any, List, Union
+from typing import Any, Callable
 
 import awkward as ak
 import numpy as np
 import numpy.typing as nptype
 
-MetaTypes = Union[float, int, str, List[Union[float, int, str]]]
+# from .groupedby import GroupedDataframes
+from .hepdf_typing import MetaTypes
 
 
 class HEPDataframe:
     """HEP Dataframe"""
+
+    # TODO: Concatenate
+    # TODO: Dump to ROOT file
+    # TODO: Dump to JSON file
+    # TODO: Load to ROOT file
+    # TODO: Load to JSON file
+    # TODO: Count
+    # TODO: Histogram 1D
+    # TODO: Histogram ND
 
     def __init__(self, data: ak.Record, **kwargs: MetaTypes) -> None:
         """Define a HEPDataframe."""
@@ -48,6 +58,13 @@ class HEPDataframe:
             new_df.add_weight(weight_name, weights[weight_name])
         return new_df
 
+    def add_meta(self, meta_info_name: str, meta_info: MetaTypes) -> HEPDataframe:
+        """Add a meta information."""
+        # TODO:"check if key is string."
+        # TODO: could be a callable.
+        self.meta[meta_info_name] = meta_info
+        return self
+
     def add_weight(
         self, weight_name: str, weight: nptype.ArrayLike | ak.Array | ak.Record
     ) -> HEPDataframe:
@@ -55,7 +72,9 @@ class HEPDataframe:
         # TODO: Include systematics.
         # TODO: Check if is 1D
         # TODO: check if has no fields.
+        # TODO: could be a callable.
         self.weights[weight_name] = weight
+        # TODO: recompute nominal weights.
         return self
 
     def add_column(
@@ -63,8 +82,17 @@ class HEPDataframe:
     ) -> HEPDataframe:
         """Add a column."""
         # TODO: check if has no fields.
+        # TODO: could be a callable.
         self.data[column_name] = column
         return self
+
+    def pipe(
+        self,
+        function_to_pipe: Callable,
+    ) -> HEPDataframe:
+        """Pip a function. The function should receive a HEPDataframe and return also a HEPDataframe."""
+        # TODO: check if function_to_pipe returns a HEPDataframe
+        return function_to_pipe(self)
 
     def __getitem__(
         self, index: int | slice | list[bool] | list[int] | nptype.ArrayLike | ak.Array
@@ -109,7 +137,7 @@ class HEPDataframe:
         """HEPDataframe string representation."""
         meta_str = "\n"
         for met, val in self.meta.items():
-            meta_str += f"{met}: {val} - "
+            meta_str += f"{met}: {val}\n"
         return f"HEPDataframe: {meta_str[:-2]} \nLength: {self.length} \nData: {self.data} \nWeights (nominal): {self.weights['weight']}"
 
     def __repr__(self) -> str:
@@ -131,8 +159,19 @@ def main() -> None:
     print(my_df.head(99))
     print("#####")
     print(my_df.tail())
+    print("#####")
+    print(my_df.add_weight("my_weight", np.ones(my_df.length) * 3))
+    print(my_df.weights.fields)
+    print("#####")
+    print(my_df.add_column("my_column", np.ones(my_df.length) * 9))
+    print("#####")
+    print(my_df.add_column("my_awk_column", ak.Array([[], [55], [66, 77]])))
+    print(my_df.data.fields)
+    print("#####")
+    print(my_df.add_meta("my_meta", 34))
+    print("#####")
+    print(my_df.pipe(lambda x: x))
 
 
 if __name__ == "__main__":
     main()
-    # print(type(ak.Array({"x": [1, 2, 3]})))
