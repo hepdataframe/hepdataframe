@@ -7,7 +7,6 @@ import awkward as ak
 import numpy as np
 import numpy.typing as nptype
 
-# from .groupedby import GroupedDataframes
 from .hepdf_typing import MetaTypes
 
 
@@ -22,6 +21,7 @@ class HEPDataframe:
     # TODO: Count
     # TODO: Histogram 1D
     # TODO: Histogram ND
+    # TODO: Rewrite `main` as tests
 
     def __init__(self, data: ak.Record, **kwargs: MetaTypes) -> None:
         """Define a HEPDataframe."""
@@ -35,6 +35,7 @@ class HEPDataframe:
         self.meta = kwargs
         self.data = data
         self.weights = ak.Array({"weight": np.ones(self.length)})
+        self.filters = ak.Array({"no_filter": np.full(self.length, True)})
 
     @classmethod
     def from_dataframe(cls, dataframe: HEPDataframe) -> HEPDataframe:
@@ -42,11 +43,13 @@ class HEPDataframe:
         new_df = cls(data=dataframe.data, **dataframe.meta)
         for weight_name in dataframe.weights.fields:
             new_df.add_weight(weight_name, dataframe.weights[weight_name])
+        for filter_name in dataframe.filters.fields:
+            new_df.add_weight(filter_name, dataframe.filters[filter_name])
         return new_df
 
     @classmethod
-    def _from_data_weights_meta(
-        cls, data: ak.Record, weights: ak.Array | ak.Record, **kwargs: MetaTypes
+    def _from_data_weights_filters_meta(
+        cls, data: ak.Record, weights: ak.Array, filters: ak.Array, **kwargs: MetaTypes
     ) -> HEPDataframe:
         """Define a new HEPDataframe from another HEPDataframe.
         Users are not expected to use it."""
@@ -56,6 +59,8 @@ class HEPDataframe:
         new_df = cls(data=data, **kwargs)
         for weight_name in weights.fields:
             new_df.add_weight(weight_name, weights[weight_name])
+        for filter_name in filters.fields:
+            new_df.add_weight(filter_name, filters[filter_name])
         return new_df
 
     def add_meta(self, meta_info_name: str, meta_info: MetaTypes) -> HEPDataframe:
@@ -86,6 +91,17 @@ class HEPDataframe:
         self.data[column_name] = column
         return self
 
+    def add_filter(
+        self, filter_name: str, filter_: nptype.ArrayLike | ak.Array | ak.Record
+    ) -> HEPDataframe:
+        """Add a filter."""
+        # TODO: check if has no fields.
+        # TODO: could be a callable.
+        if not filter_name.startswith("filter"):
+            filter_name = f"filter_{filter_name}"
+        self.filters[filter_name] = filter_
+        return self
+
     def pipe(
         self,
         function_to_pipe: Callable,
@@ -102,12 +118,19 @@ class HEPDataframe:
             index = [index]
         data = self.data[index]
         weights = self.weights[index]
-        return HEPDataframe._from_data_weights_meta(data, weights, **self.meta)
+        filters = self.filters[index]
+        return HEPDataframe._from_data_weights_filters_meta(
+            data, weights, filters, **self.meta
+        )
 
     def __setitem__(self, key: Any, value: Any) -> None:
         raise TypeError(
             "HEPDataframe does not support mutable operations at event level."
         )
+
+    def __len__(self) -> int:
+        """Return the length of the dataframe."""
+        return self.length
 
     def head(self, n_events: int = 5) -> HEPDataframe:
         """Return the first `n_events` events. Default: first 5 events."""
@@ -124,9 +147,21 @@ class HEPDataframe:
             n_events = self.length
         return self[self.length - n_events :]
 
-    def __len__(self) -> int:
-        """Return the length of the dataframe."""
-        return self.length
+    def groupby(
+        self, **filters: nptype.ArrayLike | ak.Array | ak.Record
+    ) -> GroupedDataframes:
+        """Groups events according to `filters`.
+        ATTENTION: There is no guarantees that the produced groups are non-overlapping. The user should define appropriate filters to achieve this.
+        """
+        # TODO: Check if no fields.
+        # TODO: Check if 1D
+        # TODO: Check if callable
+
+        groups = {}
+        for group_name, filter_ in filters.items():
+            groups[group_name] = self[filter_]
+
+        return GroupedDataframes(groups)
 
     @property
     def length(self) -> int:
@@ -135,14 +170,51 @@ class HEPDataframe:
 
     def __str__(self) -> str:
         """HEPDataframe string representation."""
-        meta_str = "\n"
+        meta_str = "--> Meta:\n"
         for met, val in self.meta.items():
-            meta_str += f"{met}: {val}\n"
-        return f"HEPDataframe: {meta_str[:-2]} \nLength: {self.length} \nData: {self.data} \nWeights (nominal): {self.weights['weight']}"
+            meta_str += f"    {met}: {val}\n"
+        filters_str = "--> Filters\n"
+        for filter_name in self.filters.fields:
+            filters_str += f"    {filter_name}: {self.filters[filter_name]}\n"
+        return f"--> HEPDataframe: \n{meta_str[:-2]} \n--> Length: {self.length} \n--> Data (fields): {self.data.fields} \n--> Data: {self.data} \n--> Weights (fields): {self.weights.fields} \n--> Weights (nominal): {self.weights['weight']} \n{filters_str}"
 
     def __repr__(self) -> str:
         """HEPDataframe representation."""
         return self.__str__()
+
+
+class GroupedDataframes:
+    """Grouped HEP Dataframe"""
+
+    def __init__(self, dataframes: dict[str, HEPDataframe]) -> None:
+        # def __init__(self) -> None:
+        """Define a Grouped HEPDataframe."""
+        # TODO: check if inputs are a List of HEPDataframes
+        self.dataframes = dataframes
+
+    @property
+    def length(self) -> int:
+        """Return the number of groups in the GroupedDataframes."""
+        return len(self.dataframes)
+
+    def __str__(self) -> str:
+        """GroupedDataframes string representation."""
+        return f"--> GroupedDataframes: \n--> Length: {self.length} \n--> Groups labels: {self.dataframes.keys()}"
+
+    def __repr__(self) -> str:
+        """GroupedDataframes representation."""
+        return self.__str__()
+
+    def __getitem__(self, key: str) -> HEPDataframe:
+        """Get HEPDataframe, from GroupedDataframes, by key."""
+        # TODO: Check if key is str
+        # TODO: Implement a get by key.
+        return self.dataframes[key]
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        raise TypeError(
+            "GroupedDataframes does not support mutable operations at event level."
+        )
 
 
 def main() -> None:
@@ -171,6 +243,16 @@ def main() -> None:
     print(my_df.add_meta("my_meta", 34))
     print("#####")
     print(my_df.pipe(lambda x: x))
+    print("#####")
+    print(my_df.add_filter("dummy_filter", np.full(my_df.length, False)))
+    print("#####")
+    my_groups = my_df.groupby(
+        group_1=np.array([True, False, True]),
+        group_2=np.array([False, True, False]),
+    )
+    print(my_groups)
+    print(my_groups["group_1"].data.x)
+    print(my_groups["group_2"].data.x)
 
 
 if __name__ == "__main__":
